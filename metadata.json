@@ -1,0 +1,5 @@
+{
+  "name": "ታምራት ገለታ (Amharic Akinator)",
+  "description": "An Akinator-like character guessing game entirely in Amharic, powered by the Gemini API. The app asks a series of questions to guess the famous person you are thinking of.",
+  "requestFramePermissions": []
+}
