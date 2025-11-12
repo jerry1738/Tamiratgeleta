@@ -10,27 +10,69 @@ interface QuestionScreenProps {
     onAnswer: (answer: string) => void;
 }
 
-const AnswerButton: React.FC<{ onClick: () => void; children: React.ReactNode; color: string }> = ({ onClick, children, color }) => (
-    <button
-        onClick={onClick}
-        className={`w-full md:w-auto flex-grow md:flex-none text-lg font-semibold py-3 px-6 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 ${color}`}
-    >
-        {children}
-    </button>
-);
-
 const QuestionScreen: React.FC<QuestionScreenProps> = ({ question, questionCount, lives, onAnswer }) => {
-    const defaultAnswers = [
-        { text: UI_STRINGS.yes, color: "bg-green-600 hover:bg-green-500 text-white" },
-        { text: UI_STRINGS.no, color: "bg-red-600 hover:bg-red-500 text-white" },
-        { text: UI_STRINGS.dontKnow, color: "bg-gray-600 hover:bg-gray-500 text-white" },
-        { text: UI_STRINGS.probably, color: "bg-green-800 hover:bg-green-700 text-white" },
-        { text: UI_STRINGS.probablyNot, color: "bg-red-800 hover:bg-red-700 text-white" },
-    ];
+    
+    const renderAnswers = () => {
+        if (question.answers && question.answers.length > 0) {
+            // Custom answers view: A responsive flex grid for variable answers
+            return (
+                <div className="flex flex-wrap justify-center gap-4 w-full">
+                    {question.answers.map(answer => (
+                        <button
+                            key={answer}
+                            onClick={() => onAnswer(answer)}
+                            className="flex-1 min-w-[140px] bg-sky-700 hover:bg-sky-600 text-white text-lg font-semibold py-3 px-5 rounded-lg shadow-md transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-sky-400"
+                        >
+                            {answer}
+                        </button>
+                    ))}
+                </div>
+            );
+        }
 
-    const displayedAnswers = question.answers
-        ? question.answers.map(ans => ({ text: ans, color: "bg-sky-700 hover:bg-sky-600 text-white" }))
-        : defaultAnswers;
+        // Default answers view with a clear visual hierarchy
+        return (
+            <div className="w-full flex flex-col items-center gap-5">
+                {/* Primary Answers: Large and prominent */}
+                <div className="grid grid-cols-2 gap-4 w-full">
+                    <button
+                        onClick={() => onAnswer(UI_STRINGS.yes)}
+                        className="text-xl font-bold py-4 px-6 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 bg-green-600 hover:bg-green-500 text-white focus:outline-none focus:ring-2 focus:ring-green-400"
+                    >
+                        {UI_STRINGS.yes}
+                    </button>
+                    <button
+                        onClick={() => onAnswer(UI_STRINGS.no)}
+                        className="text-xl font-bold py-4 px-6 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-105 bg-red-600 hover:bg-red-500 text-white focus:outline-none focus:ring-2 focus:ring-red-400"
+                    >
+                        {UI_STRINGS.no}
+                    </button>
+                </div>
+
+                {/* Secondary Answers: Smaller and less prominent */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+                    <button
+                        onClick={() => onAnswer(UI_STRINGS.probably)}
+                        className="text-base font-semibold py-2 px-4 rounded-md shadow-md transition-all duration-300 transform hover:scale-105 bg-green-800 hover:bg-green-700 text-white focus:outline-none focus:ring-2 focus:ring-green-600"
+                    >
+                        {UI_STRINGS.probably}
+                    </button>
+                    <button
+                        onClick={() => onAnswer(UI_STRINGS.probablyNot)}
+                        className="text-base font-semibold py-2 px-4 rounded-md shadow-md transition-all duration-300 transform hover:scale-105 bg-red-800 hover:bg-red-700 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                    >
+                        {UI_STRINGS.probablyNot}
+                    </button>
+                     <button
+                        onClick={() => onAnswer(UI_STRINGS.dontKnow)}
+                        className="sm:col-span-1 text-base font-semibold py-2 px-4 rounded-md shadow-md transition-all duration-300 transform hover:scale-105 bg-gray-600 hover:bg-gray-500 text-white focus:outline-none focus:ring-2 focus:ring-gray-400"
+                    >
+                        {UI_STRINGS.dontKnow}
+                    </button>
+                </div>
+            </div>
+        );
+    };
     
     return (
         <div className="w-full max-w-2xl mx-auto p-4 flex flex-col items-center text-center">
@@ -44,15 +86,12 @@ const QuestionScreen: React.FC<QuestionScreenProps> = ({ question, questionCount
                 </div>
             </div>
             
-            <div className="mb-8">
+            <div className="mb-8 min-h-[7rem] flex items-center justify-center">
                 <h2 className="text-2xl md:text-3xl font-semibold text-white leading-relaxed">{question.text}</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:flex md:flex-row md:flex-wrap justify-center gap-4 w-full">
-                {displayedAnswers.map(answer => (
-                     <AnswerButton key={answer.text} onClick={() => onAnswer(answer.text)} color={answer.color}>
-                        {answer.text}
-                     </AnswerButton>
-                ))}
+
+            <div className="w-full">
+                {renderAnswers()}
             </div>
         </div>
     );

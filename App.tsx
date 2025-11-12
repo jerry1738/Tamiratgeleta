@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { GameState, Guess, Question } from './types';
 import * as geminiService from './services/geminiService';
@@ -6,7 +5,6 @@ import { UI_STRINGS, INITIAL_USER_PROMPT, WRONG_GUESS_PROMPT, LOCAL_STORAGE_SCOR
 import StartScreen from './components/StartScreen';
 import QuestionScreen from './components/QuestionScreen';
 import GuessScreen from './components/GuessScreen';
-import LoadingSpinner from './components/LoadingSpinner';
 import { VoodooIcon } from './components/icons';
 
 const App: React.FC = () => {
@@ -37,19 +35,30 @@ const App: React.FC = () => {
         setCurrentQuestion(null);
         setQuestionCount(0);
         setLives(5);
-        geminiService.startNewGame();
-        
-        const response = await geminiService.getGeminiResponse(INITIAL_USER_PROMPT);
-        
-        if (response.type === 'question') {
-            setCurrentQuestion({ text: response.question, answers: response.answers });
-            setGameState(GameState.IN_PROGRESS);
-            setQuestionCount(1);
-        } else {
-            setError(UI_STRINGS.errorDetails);
+
+        try {
+            geminiService.startNewGame();
+            const response = await geminiService.getGeminiResponse(INITIAL_USER_PROMPT);
+
+            if (response.type === 'question') {
+                setCurrentQuestion({ text: response.question, answers: response.answers });
+                setGameState(GameState.IN_PROGRESS);
+                setQuestionCount(1);
+            } else {
+                setError(response.detail || UI_STRINGS.errorDetails);
+                setGameState(GameState.ERROR);
+            }
+        } catch (e: any) {
+            console.error("Error starting game:", e);
+            if (e.message === "API_KEY_MISSING") {
+                setError(UI_STRINGS.apiNotConfigured);
+            } else {
+                setError(UI_STRINGS.errorDetails);
+            }
             setGameState(GameState.ERROR);
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }, []);
 
     const handleAnswer = useCallback(async (answer: string) => {
@@ -70,7 +79,7 @@ const App: React.FC = () => {
                 sureness: response.sureness || 0 // Fallback sureness
             });
         } else {
-            setError(UI_STRINGS.errorDetails);
+            setError(response.detail || UI_STRINGS.errorDetails);
             setGameState(GameState.ERROR);
         }
 
@@ -120,7 +129,7 @@ const App: React.FC = () => {
         if (isLoading) {
             return (
                 <div className="flex flex-col items-center justify-center text-center p-4">
-                    <LoadingSpinner />
+                    <VoodooIcon className="w-24 h-24 text-purple-400 animate-voodoo-pulse" />
                     <p className="text-cyan-200 mt-4 text-lg">{UI_STRINGS.thinking}</p>
                 </div>
             );
@@ -134,15 +143,29 @@ const App: React.FC = () => {
             case GameState.GUESSING:
                 return currentGuess && <GuessScreen guess={currentGuess} onConfirm={handleGuessResponse} />;
             case GameState.GAME_OVER_WIN:
+                const confettiColors = ['#f44336', '#e91e63', '#9c27b0', '#2196f3', '#4caf50', '#ffeb3b', '#ff9800'];
+                const confettiElements = Array.from({ length: 30 }).map((_, i) => (
+                    <div
+                        key={i}
+                        className="confetti"
+                        style={{
+                            left: `${Math.random() * 100}%`,
+                            animationDelay: `${Math.random() * 5}s`,
+                            animationDuration: `${3 + Math.random() * 2}s`,
+                            backgroundColor: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+                        }}
+                    ></div>
+                ));
                 return (
-                    <div className="flex flex-col items-center justify-center text-center p-4 text-white">
+                    <div className="relative w-full h-full flex flex-col items-center justify-center text-center p-4 text-white overflow-hidden">
+                        {confettiElements}
                         <VoodooIcon className="w-28 h-28 text-purple-400 mb-4 animate-voodoo-pulse" />
-                        <h2 className="text-3xl font-bold text-purple-300 mb-4">{UI_STRINGS.iWonFun}</h2>
-                        <p className="text-5xl font-extrabold mb-4" style={{ textShadow: '0 0 10px rgba(255,255,255,0.5)' }}>{currentGuess?.name}</p>
-                        <p className="text-lg text-cyan-200 mb-8">{UI_STRINGS.guessedInQuestions.replace('{count}', String(questionCount))}</p>
+                        <h2 className="text-3xl font-bold text-purple-300 mb-4 z-10">{UI_STRINGS.iWonFun}</h2>
+                        <p className="text-5xl font-extrabold mb-4 z-10" style={{ textShadow: '0 0 10px rgba(255,255,255,0.5)' }}>{currentGuess?.name}</p>
+                        <p className="text-lg text-cyan-200 mb-8 z-10">{UI_STRINGS.guessedInQuestions.replace('{count}', String(questionCount))}</p>
                         <button
                             onClick={handleStartGame}
-                            className="bg-cyan-500 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 transition-all duration-300 transform hover:scale-105"
+                            className="bg-cyan-500 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 transition-all duration-300 transform hover:scale-105 z-10"
                         >
                             {UI_STRINGS.playAgain}
                         </button>
@@ -151,13 +174,13 @@ const App: React.FC = () => {
             case GameState.GAME_OVER_LOSS:
                 return (
                     <div className="flex flex-col items-center justify-center text-center p-4 text-white">
+                        <VoodooIcon className="w-28 h-28 text-red-500/70 mb-4 animate-voodoo-glitch" />
                         <h2 className="text-4xl font-bold text-red-400 mb-2">{UI_STRINGS.iLost}</h2>
                         <p className="text-lg text-gray-300 mb-8">{UI_STRINGS.mindHardToRead}</p>
                         <button
                             onClick={handleStartGame}
                             className="bg-cyan-500 text-gray-900 font-bold py-3 px-8 rounded-full shadow-lg shadow-cyan-500/50 hover:bg-cyan-400 transition-all duration-300 transform hover:scale-105"
                         >
-                            {/* Fix: Corrected typo from UI_STRINA to UI_STRINGS. */}
                             {UI_STRINGS.playAgain}
                         </button>
                     </div>

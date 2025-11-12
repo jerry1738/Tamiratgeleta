@@ -25,6 +25,32 @@
         .animate-voodoo-pulse {
             animation: voodoo-pulse 3s infinite ease-in-out;
         }
+
+        /* New Glitch Animation for Loss Screen */
+        @keyframes voodoo-glitch {
+            0%, 100% { opacity: 1; transform: translate(0, 0); }
+            20% { opacity: 0.7; transform: translate(-2px, 1px); }
+            40% { opacity: 1; transform: translate(1px, -1px); }
+            60% { opacity: 0.5; transform: translate(2px, 2px); }
+            80% { opacity: 1; transform: translate(-1px, -2px); }
+        }
+        .animate-voodoo-glitch {
+            animation: voodoo-glitch 0.7s infinite steps(1, end);
+        }
+
+        /* New Confetti Animation for Win Screen */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(500px) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            top: -20px; /* Start above the container */
+            opacity: 0;
+            animation: confetti-fall 5s linear infinite;
+        }
     </style>
 <script type="importmap">
 {
